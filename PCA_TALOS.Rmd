@@ -1,0 +1,80 @@
+---
+title: "PCA_Talos"
+author: "Daniel"
+date: "2026-07-20"
+output: html_document
+---
+
+# --- Carregamento e exploração inicial dos dados ---
+
+concepts <- read.csv2("C:/users/danie/OneDrive/Ambiente de Trabalho/Biblio_Network/ID Concept_count_CLEAN.csv", header = TRUE)
+head(concepts)
+
+str(concepts)
+
+# Seleção das colunas de interesse (variáveis quantitativas)
+concepts_variables <- concepts[, 2:7]
+head(concepts_variables)
+
+summary(concepts_variables)
+
+
+# --- Estatísticas Descritivas ---
+
+library(dplyr)
+concepts_variables %>% summarise_if(is.numeric, sd)
+
+
+# --- Decomposição em Valores Próprios (Matriz de Covariância) ---
+
+# Obter eigenvalues e eigenvectors (com base na matriz de covariância)
+
+# 1º) Determinar a matriz de covariância
+cov_concepts <- cov(concepts_variables)
+
+# 2º) Obter eigenvalues e eigenvectors
+eigen_concepts <- eigen(cov_concepts)
+eigen_concepts
+
+
+# --- Análise de Componentes Principais (PCA) via 'princomp' ---
+
+# Executar PCA (sem correlação/escala)
+pca_concepts <- princomp(concepts_variables, cor = FALSE)
+print(summary(pca_concepts), loadings = TRUE)
+
+
+# --- Scree Plot (Variância Explicada) ---
+
+var_explained_concepts = pca_concepts$sdev^2 / sum(pca_concepts$sdev^2)
+
+# Criar screeplot
+library(ggplot2)
+
+qplot(c(1:6), var_explained_concepts) +
+  geom_line() +
+  xlab("Principal Component") +
+  ylab("Variance Explained") +
+  ggtitle("Scree Plot") +
+  ylim(0, 1)
+
+
+# --- Análises Complementares ---
+
+cov(concepts_variables, pca_concepts$scores)
+
+# Cálculo de scores e validações
+sqrt(eigen_concepts$values[1]/6)
+sqrt(eigen_concepts$values[2]/6)
+
+
+# --- PCA Alternativa (com escala) e Visualização ---
+
+# Executar PCA utilizando prcomp com escalonamento
+pca_concepts <- prcomp(concepts_variables, scale. = TRUE)
+
+library(FactoMineR)
+library(factoextra)
+
+# Visualização das variáveis no plano fatorial
+fviz_pca_var(pca_concepts)
